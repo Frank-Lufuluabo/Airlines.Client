@@ -1,31 +1,39 @@
 let pendingBooking = null;
 
+// jQuery document ready
+$(document).ready(function () {
+  // Initialize page
+  $("#dateForm").on("submit", loadDestinationsForDate);
+  loadBookings();
+});
+
 // Load Destinations based on selected date
 const loadDestinationsForDate = (event) => {
   event.preventDefault();
-  const selectedDate = document.getElementById("flightDate").value;
+  const selectedDate = $("#flightDate").val();
   const destinations = JSON.parse(localStorage.getItem("destinations")) || [];
-  const destinationSelect = document.getElementById("destination");
-  destinationSelect.innerHTML = "";
+  const $destinationSelect = $("#destination");
+  $destinationSelect.empty;
 
   const filteredDestinations = destinations.filter(
     (dest) => dest.date === selectedDate
   );
 
   filteredDestinations.forEach((destination, index) => {
-    const option = document.createElement("option");
-    option.text = `${destination.city} (${destination.airline}) - $${destination.price}, ${destination.travelTime} hrs`;
-    option.value = index; // Set value to index to uniquely identify
-    destinationSelect.add(option);
+    const $option = $("<option></option>")
+     .text( `${destination.city} (${destination.airline}) - $${destination.price}, ${destination.travelTime} hrs`
+    )
+    .val(index); // Set value to index to uniquely identify
+    $destinationSelect.append($option);
   });
 
-  document.getElementById("bookingForm").classList.remove("d-none");
+  $("#bookingForm").removeClass("d-none");
 };
 
 // Directly confirm and add booking
 const confirmBookingDirectly = () => {
-  const passengerName = document.getElementById("passengerName").value;
-  const selectedDestinationIndex = document.getElementById("destination").value;
+  const passengerName = $("#passengerName").val();
+  const selectedDestinationIndex = $("#destination").val();
   const destinations = JSON.parse(localStorage.getItem("destinations")) || [];
 
   const selectedDestination = destinations[selectedDestinationIndex]; // Find by index
@@ -50,18 +58,18 @@ const confirmBookingDirectly = () => {
   });
   localStorage.setItem("bookings", JSON.stringify(bookings));
 
-  document.getElementById("passengerName").value = "";
+  $("#passengerName").val("");
   loadBookings();
 };
 
 // Load bookings from localStorage
 const loadBookings = () => {
   const bookings = JSON.parse(localStorage.getItem("bookings")) || [];
-  const bookingsList = document.getElementById("bookingsList");
-  bookingsList.innerHTML = "";
+  const $bookingsList = $("#bookingsList");
+  bookingsList.empty= "";
 
   bookings.forEach((booking, index) => {
-    bookingsList.innerHTML += `
+    const $row = $(`
                     <tr>
                         <td>${index + 1}</td>
                         <td>${booking.passengerName}</td>
@@ -72,7 +80,8 @@ const loadBookings = () => {
                             <button class="btn btn-sm btn-danger" onclick="deleteBooking(${index})">Delete</button>
                         </td>
                     </tr>
-                `;
+                `);
+                $bookingsList.append($row);
   });
 };
 
@@ -84,8 +93,8 @@ const deleteBooking = (index) => {
   loadBookings();
 };
 
-// Initialize page
-document
-  .getElementById("dateForm")
-  .addEventListener("submit", loadDestinationsForDate);
-loadBookings();
+// Event delegation for delete buttons
+$("#bookingsList").on("click", ".delete-booking", function () {
+  const index = $(this).data("index");
+  deleteBooking(index);
+});
